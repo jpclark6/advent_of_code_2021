@@ -33,13 +33,13 @@ POSSIBILITIES = {}
 for num, segment in SEGMENTS.items():
     POSSIBILITIES[segment] = 1 + POSSIBILITIES.get(segment, 0)
 
-with open('puzzle.txt', 'r') as f:
+with open("puzzle.txt", "r") as f:
     lines = f.readlines()
 lines = [line.strip() for line in lines]
 
 # part 1
 answer = 0
-outputs = [line.split(' | ')[1].strip().split(' ') for line in lines]
+outputs = [line.split(" | ")[1].strip().split(" ") for line in lines]
 for line in outputs:
     for output in line:
         if POSSIBILITIES[len(output)] == 1:
@@ -49,6 +49,7 @@ print("Part 1:", answer)
 
 
 # part 2
+
 
 def found_locations(bars):
     for v in bars.values():
@@ -62,12 +63,14 @@ def combine(one, two):
     # print(f'{one}\n{two}\n{combined}')
     return combined
 
+
 def keep_bars(bars, digits):
-    return ''.join([b for b in bars if b in digits])
+    return "".join([b for b in bars if b in digits])
 
 
 def remove_bars(bars, digits):
-    return ''.join([b for b in bars if b not in digits])
+    return "".join([b for b in bars if b not in digits])
+
 
 def in_digit(letters, digit):
     for letter in letters:
@@ -75,9 +78,10 @@ def in_digit(letters, digit):
             return False
     return True
 
+
 KEY = list(SEGMENTS_KEY.values())
 
-digits_list = [line.replace(' |', '').split(' ') for line in lines]
+digits_list = [line.replace(" |", "").split(" ") for line in lines]
 
 answer = 0
 
@@ -85,7 +89,12 @@ for digits in digits_list:
 
     digits_possibilities = []
     for digit in digits:
-        digits_possibilities.append((''.join(sorted(list(digit))), [k for k, v in SEGMENTS_KEY.items() if sum(v) == len(digit)]))
+        digits_possibilities.append(
+            (
+                "".join(sorted(list(digit))),
+                [k for k, v in SEGMENTS_KEY.items() if sum(v) == len(digit)],
+            )
+        )
     bars = [string.ascii_lowercase[:7]] * 7
 
     digits_possibilities = sorted(digits_possibilities, key=lambda x: len(x[0]))
@@ -132,7 +141,7 @@ for digits in digits_list:
                 bars[6] = keep_bars(bars[6], digit)
                 bars[2] = remove_bars(bars[2], digit)
                 bars[4] = remove_bars(bars[4], digit)
-            else: # it's a 2
+            else:  # it's a 2
                 bars[2] = keep_bars(bars[2], digit)
                 bars[3] = keep_bars(bars[3], digit)
                 bars[1] = remove_bars(bars[1], digit)
@@ -140,10 +149,12 @@ for digits in digits_list:
 
     for bar in bars:
         if len(bar) != 1:
-            import pdb; pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
 
     final_four = digits[-4:]
-    number = ''
+    number = ""
     for fin in final_four:
         fin = list(fin)
         truth_map = [x in fin for x in bars]
