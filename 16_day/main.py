@@ -89,7 +89,6 @@ def process_packet(loc):
                 return loc, 1
             return loc, 0
         elif packet_type_id == 6:
-            # first < second ? 1 : 0
             if subpacket_numbers[0] < subpacket_numbers[1]:
                 return loc, 1
             return loc, 0
