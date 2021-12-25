@@ -1,5 +1,7 @@
+import time
 from uuid import uuid4
 from pprint import pprint as pp
+from collections import deque
 
 with open("puzzle.txt") as f:
     lines = f.read().split("\n")
@@ -96,10 +98,18 @@ all_x = sorted(list(all_x))
 all_y = sorted(list(all_y))
 all_z = sorted(list(all_z))
 
-mini_squares = []
+mini_squares = deque()
+
+count = 0
+times = [time.time(), time.time()]
+percents = [0, .0001]
 
 for i, x in enumerate(all_x):
-    print(round(i / len(all_x), 5), "%", "Finished", len(mini_squares), "mini squares")
+    times.append(time.time())
+    percents.append(round(i / len(all_x), 5))
+    time_left = (percents[-1] - percents[-2]) / (times[-1] - times[-2]) * (1 - percents[-1]) * 100
+
+    print(percents[-1], "%", "Finished", count, times[-1] - times[-2], time_left)
     if i == len(all_x) - 1:
         continue
     for j, y in enumerate(all_y):
@@ -108,46 +118,29 @@ for i, x in enumerate(all_x):
         for k, z in enumerate(all_z):
             if k == len(all_z) - 1:
                 continue
-            x_min = x
-            x_max = all_x[i + 1]
-            y_min = y
-            y_max = all_y[j + 1]
-            z_min = z
-            z_max = all_z[k + 1]
-
-            ids = set()
+            inst = None
             for square in squares:
                 if (
-                    x_min >= square.x_min
-                    and x_max <= square.x_max
-                    and y_min >= square.y_min
-                    and y_max <= square.y_max
-                    and z_min >= square.z_min
-                    and z_max <= square.z_max
+                    x >= square.x_min
+                    and all_x[i + 1] <= square.x_max
+                    and y >= square.y_min
+                    and all_y[j + 1] <= square.y_max
+                    and z >= square.z_min
+                    and all_z[k + 1] <= square.z_max
                 ):
-                    ids.add(square.id)
-            if ids:
-                mini_square = MiniSquare(
-                    {
-                        "x_min": x_min,
-                        "x_max": x_max,
-                        "y_min": y_min,
-                        "y_max": y_max,
-                        "z_min": z_min,
-                        "z_max": z_max,
-                    }
-                )
-                mini_square.squares = ids
-                mini_squares.append(mini_square)
+                    inst = square.instruction
+            if inst == 'on':
+                count += ((all_x[i + 1] - x) *
+                          (all_y[j + 1] - y) * (all_z[k + 1] - z))
 
-print("Mini squares", len(mini_squares))
+# print("Mini squares", len(mini_squares))
 
-for square in squares:
-    for mini_square in mini_squares:
-        if square.id in mini_square.squares:
-            mini_square.instruction = square.instruction
+# for square in squares:
+#     for mini_square in mini_squares:
+#         if square.id in mini_square.squares:
+#             mini_square.instruction = square.instruction
 
 
 
-print("Part 1:", count_ons(mini_squares))
+print("Part 2:", count)
 
