@@ -1,14 +1,8 @@
+from concurrent.futures import ProcessPoolExecutor
 import time
 from uuid import uuid4
 from pprint import pprint as pp
 from collections import deque
-
-with open("puzzle.txt") as f:
-    lines = f.read().split("\n")
-
-
-# part_1 = True
-part_1 = False
 
 
 class Square:
@@ -31,87 +25,34 @@ class Square:
         return (self.x_max - self.x_min) * (self.y_max - self.y_min) * (self.z_max - self.z_min)
 
 
-
-class MiniSquare(Square):
-    def __init__(self, dims):
-        super().__init__(dims)
-        self.squares = None
-
-
-def count_ons(mini_squares):
-    running_total = 0
-    for mini_square in mini_squares:
-        if mini_square.instruction == 'on':
-            running_total += mini_square.volume
-    return running_total
-
-
-lines = [line.split("=") for line in lines]
-squares = []
-for line_raw in lines:
-    line = line_raw[1:]
-    square = []
-    for l in line:
-        square.append(l.split(",")[0])
-    square_obj = Square(
-        {
-            "x_min": int(square[0].split("..")[0]) - .5,
-            "x_max": int(square[0].split("..")[1]) + .5,
-            "y_min": int(square[1].split("..")[0]) - .5,
-            "y_max": int(square[1].split("..")[1]) + .5,
-            "z_min": int(square[2].split("..")[0]) - .5,
-            "z_max": int(square[2].split("..")[1]) + .5,
-            "instruction": line_raw[0].split(" ")[0],
-        }
-    )
-    dims = [int(square[0].split("..")[0]),
-            int(square[0].split("..")[1]),
-            int(square[1].split("..")[0]),
-            int(square[1].split("..")[1]),
-            int(square[2].split("..")[0]),
-            int(square[2].split("..")[1])]
-    if part_1:
-        if any([(abs(x) > 50) for x in dims]):
-            continue
-        else:
-            squares.append(square_obj)
-    else:
+def get_squares():
+    with open("puzzle.txt") as f:
+        lines = f.read().split("\n")
+    lines = [line.split("=") for line in lines]
+    squares = []
+    for line_raw in lines:
+        line = line_raw[1:]
+        square = []
+        for l in line:
+            square.append(l.split(",")[0])
+        square_obj = Square(
+            {
+                "x_min": int(square[0].split("..")[0]) - .5,
+                "x_max": int(square[0].split("..")[1]) + .5,
+                "y_min": int(square[1].split("..")[0]) - .5,
+                "y_max": int(square[1].split("..")[1]) + .5,
+                "z_min": int(square[2].split("..")[0]) - .5,
+                "z_max": int(square[2].split("..")[1]) + .5,
+                "instruction": line_raw[0].split(" ")[0],
+            }
+        )
         squares.append(square_obj)
+    return squares
 
-all_x = set()
-all_y = set()
-all_z = set()
 
-for square in squares:
-    all_x.add(square.x_min)
-    all_x.add(square.x_max)
-    all_y.add(square.y_min)
-    all_y.add(square.y_max)
-    all_z.add(square.z_min)
-    all_z.add(square.z_max)
 
-print("x", len(all_x))
-print("y", len(all_y))
-print("z", len(all_z))
-
-all_x = sorted(list(all_x))
-all_y = sorted(list(all_y))
-all_z = sorted(list(all_z))
-
-mini_squares = deque()
-
-count = 0
-times = [time.time(), time.time()]
-percents = [0, .0001]
-
-for i, x in enumerate(all_x):
-    times.append(time.time())
-    percents.append(round(i / len(all_x), 5))
-    time_left = (percents[-1] - percents[-2]) / (times[-1] - times[-2]) * (1 - percents[-1]) * 100
-
-    print(percents[-1], "%", "Finished", count, times[-1] - times[-2], time_left)
-    if i == len(all_x) - 1:
-        continue
+def something(i, x, squares, all_x, all_y, all_z):
+    count = 0
     for j, y in enumerate(all_y):
         if j == len(all_y) - 1:
             continue
@@ -132,6 +73,58 @@ for i, x in enumerate(all_x):
             if inst == 'on':
                 count += ((all_x[i + 1] - x) *
                           (all_y[j + 1] - y) * (all_z[k + 1] - z))
+    return count
+
+def run():
+    squares = get_squares()
+
+    all_x = set()
+    all_y = set()
+    all_z = set()
+
+    for square in squares:
+        all_x.add(square.x_min)
+        all_x.add(square.x_max)
+        all_y.add(square.y_min)
+        all_y.add(square.y_max)
+        all_z.add(square.z_min)
+        all_z.add(square.z_max)
+
+    print("x", len(all_x))
+    print("y", len(all_y))
+    print("z", len(all_z))
+
+    all_x = sorted(list(all_x))
+    all_y = sorted(list(all_y))
+    all_z = sorted(list(all_z))
+
+    count = 0
+    start = time.time()
+    percents = [0, .0001]
+
+    tasks = []
+    with ProcessPoolExecutor(max_workers=8) as exe:
+        for i, x in enumerate(all_x):
+            if i == len(all_x) - 1:
+                continue
+            task = exe.submit(something, i, x, squares, all_x, all_y, all_z)
+            tasks.append(task)
+            # print("Appended", i)
+        count = 0
+        task_count = 0
+        for task in tasks:
+            print("Finished", task_count, "out of", len(tasks))
+            count += task.result()
+            task_count += 1
+
+    print("Part 2:", count)
+    print("Took", time.time() - start, 'seconds')
+
+if __name__ == '__main__':
+    run()
+
+
+
 
 # print("Mini squares", len(mini_squares))
 
@@ -141,6 +134,4 @@ for i, x in enumerate(all_x):
 #             mini_square.instruction = square.instruction
 
 
-
-print("Part 2:", count)
 
