@@ -113,7 +113,7 @@ def run():
         count = 0
         task_count = 0
         for task in tasks:
-            print("Finished", task_count, "out of", len(tasks))
+            print("Finished", task_count, "out of", len(tasks), task_count / len(tasks) * 100, '%')
             count += task.result()
             task_count += 1
 
